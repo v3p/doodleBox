@@ -88,7 +88,7 @@ function editor:resize(w, h)
 end
 
 function editor:quit()
-	self:saveDoodle()
+	--self:saveDoodle()
 end
 
 return editor

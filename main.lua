@@ -68,6 +68,18 @@ function love.load()
 	state:setState("console")
 
 	currentDoodle = false
+
+	load("snow")
+
+	local c = "		shithole"
+	local indent = 0
+	c:gsub("(	)", function() indent = indent + 1 end)
+
+	--console:print("Found "..indent.." tabs in this bitch", "con")
+
+
+
+
 end
 
 function love.update(dt)

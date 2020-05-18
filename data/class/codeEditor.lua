@@ -42,13 +42,66 @@ local functions = {
 local symbols = {"+", "-", "*", "/", "%", "^", "#", "=", "==", "=>", "<=", "~", 
 				 "<", ">", "(", ")", "{", "}", "[", "]", ";", ":", ",", "."}
 
---[[
-local function utf8sub(s,i,j)
-    i=utf8.offset(s,i)
-    j=utf8.offset(s,j+1)-1
-    return string.sub(s,i,j)
+--Various helper functions
+--STRING FUNCTIONS	
+local function getCharBytes(string, char)
+	char = char or 1
+	local b = string.byte(string, char)
+	b = b or 0
+	local bytes = 1
+	if b > 0 and b <= 127 then
+      bytes = 1
+   elseif b >= 194 and b <= 223 then
+      bytes = 2
+   elseif b >= 224 and b <= 239 then
+      bytes = 3
+   elseif b >= 240 and b <= 244 then
+      bytes = 4
+   end
+	return bytes
 end
-]]
+
+local function utf8len(str)
+	local pos = 1
+	local len = 0
+	while pos <= #str do
+		len = len + 1
+		pos = pos + getCharBytes(str, pos)
+	end
+	return len
+end
+
+local function utf8sub(str, s, e)
+	s = s or 1
+	e = e or console.len(str)
+
+	if s < 1 then s = 1 end
+	if e < 1 then e = console.len(str) + e + 1 end
+	if e > utf8len(str) then e = utf8len(str) end
+
+	if s > e then return "" end
+
+	local sByte = 0
+	local eByte = 1
+
+	local pos = 1
+	local i = 0
+	while pos <= #str do
+		i = i + 1
+		if i == s then
+			sByte = pos
+		end
+		pos = pos + getCharBytes(str, pos)
+		if i == e then
+			eByte = pos - 1
+			break
+		end
+	end
+
+	return string.sub(str, sByte, eByte)
+end
+
+--Syntax highligting helpers
 local function isKeyword(w)
 	local is = false
 	for k,v in pairs(keywords) do
@@ -110,6 +163,16 @@ function codeEditor.new(x, y, width, height, style)
 		currentLine = 1,
 		currentLinePosition = 0,
 
+		cursor = {
+			--These are for editing text 
+			line = 1,
+			position = 0,
+			--These are for drawing
+			x = 0,
+			y = 0,
+			width = style.font:getWidth("a")
+		},
+
 		scroll = {
 			x = 1,
 			y = 1
@@ -118,7 +181,6 @@ function codeEditor.new(x, y, width, height, style)
 		file = "untitled"
 	}
 	e.fontHeight = e.style.font:getAscent() - e.style.font:getDescent()
-	e.cursorWidth = e.style.font:getWidth("a")
 	e.style.margin = e.style.font:getWidth("9999")
 	e.visibleLines = math.floor((height - (e.style.margin * 2)) / (style.font:getAscent() - style.font:getDescent()) ) - 1
 
@@ -195,6 +257,9 @@ function codeEditor:loadFile(path)
 	if fs.getInfo(path) then
 		local lc = 0
 		for line in fs.lines(path) do
+			if #line < 1 then
+				line = ""
+			end
 			self.linesRaw[#self.linesRaw + 1] = line
 			lc = lc + 1
 		end
@@ -202,6 +267,7 @@ function codeEditor:loadFile(path)
 			self.linesRaw[1] = ""
 		end
 		self.file = path
+		self:updateCursor()
 	else
 		error("'"..path.."' does not exists.")
 	end
@@ -217,21 +283,29 @@ function codeEditor:setFont(font)
 
 end
 
+function codeEditor:updateCursor()
+	self.cursor.x = self.x + self.scroll.x + self.style.sideMargin + self.style.font:getWidth(utf8sub(self.linesRaw[self.cursor.line], 1, self.cursor.position))
+	self.cursor.y = self.y + self.style.topMargin + (self.fontHeight * (self.cursor.line - self.scroll.y))
+
+	if self.cursor.position == 0 then
+		self.cursor.x = self.x + self.scroll.x + self.style.sideMargin
+	end
+
+	if self.cursor.x > self.width then
+		self.scroll.x = self.scroll.x + self.width - self.cursor.x - self.cursor.width
+	elseif self.cursor.x < self.style.sideMargin then
+		self.scroll.x = self.scroll.x - self.cursor.x + self.cursorWidth + self.style.sideMargin
+	end
+
+	if self.cursor.y + self.fontHeight > self.height - self.style.topMargin then
+		self.scroll.y = self.scroll.y + 1
+	elseif self.cursor.y < self.style.topMargin then
+		self.scroll.y = self.scroll.y - 1
+	end
+end
+
 function codeEditor:update(dt)
 	self:highlight()
-
-	self.cursorX = self.x + self.scroll.x + self.style.sideMargin + self.style.font:getWidth(utf8sub(self.linesRaw[self.currentLine], 1, self.currentLinePosition))
-	self.cursorY = self.y + self.style.topMargin + (self.fontHeight * (self.currentLine - self.scroll.y))
-
-	if self.currentLinePosition == 0 then
-		self.cursorX = self.x + self.scroll.x + self.style.sideMargin
-	end
-
-	if self.cursorX > self.width then
-		self.scroll.x = self.scroll.x + self.width - self.cursorX - self.cursorWidth
-	elseif self.cursorX < self.style.sideMargin then
-		self.scroll.x = self.scroll.x - self.cursorX + self.cursorWidth + self.style.sideMargin
-	end
 end
 
 function codeEditor:draw()
@@ -260,9 +334,9 @@ function codeEditor:draw()
 	lg.setColor(0, 1, 0, 1)
 	lg.printf(self.currentLine.."/"..#self.linesRaw, 0, self.y + self.height - self.style.topMargin + (self.style.topMargin / 2) - (self.fontHeight / 2), self.width, "left")
 
-		--Cursor
+	--Cursor
 	lg.setColor(self.style.color.cursor)
-	lg.rectangle("fill", self.cursorX, self.cursorY, self.cursorWidth, self.fontHeight)
+	lg.rectangle("fill", self.cursor.x, self.cursor.y, self.cursor.width, self.fontHeight)
 
 	--Lines
 	lg.setColor(self.style.color.text)
@@ -290,101 +364,84 @@ function codeEditor:draw()
 end
 
 function codeEditor:keypressed(key)
+	local line = self.linesRaw[self.cursor.line]
 	if key == "return" then
-		local line = self.linesRaw[self.currentLine]
+		local lineStart = utf8sub(line, 0, self.cursor.position)
+		local lineEnd = utf8sub(line, self.cursor.position+1, #line)
 
-		local lineStart = self.linesRaw[self.currentLine]:sub(1, self.currentLinePosition)
-		local lineEnd = self.linesRaw[self.currentLine]:sub(self.currentLinePosition+1)
-
-		table.insert(self.linesRaw, self.currentLine + 1, lineEnd)
-		self.linesRaw[self.currentLine] = lineStart
-		self.currentLine = self.currentLine + 1
-		self.currentLinePosition = 0
-
-		if self.currentLine > self.visibleLines + self.scroll.y then
-			self.scroll.y = self.currentLine - self.visibleLines
+		if self.cursor.position == 0 then
+			lineStart = ""
 		end
+
+		self.linesRaw[self.cursor.line] = lineStart
+
+		local indent = self:countIndent(line)
+		for i=1, indent do
+			lineEnd = "	"..lineEnd
+		end
+
+		table.insert(self.linesRaw, self.cursor.line + 1, lineEnd)
+		self.cursor.line = self.cursor.line + 1
+		self.cursor.position = indent
+
+
+		self:updateCursor()
 	elseif key == "backspace" then
-		local lineStart = utf8sub(self.linesRaw[self.currentLine], 1, self.currentLinePosition)
-		local lineEnd = utf8sub(self.linesRaw[self.currentLine], self.currentLinePosition+1, #self.linesRaw[self.currentLine])
+		local lineStart = utf8sub(line, 0, self.cursor.position)
+		local lineEnd = utf8sub(line, self.cursor.position+1, #line)
 
-		if kb.isDown("lshift") or kb.isDown("rshift") then
-			self.linesRaw[self.currentLine] = lineEnd
-			self.currentLinePosition = 0
+		if self.cursor.position == 0 then
+			lineStart = ""
+		end
+
+		lineStart = utf8sub(lineStart, 1, -2)
+
+		if self.cursor.position < 1 then
+			if self.cursor.line > 1 then
+				table.remove(self.linesRaw, self.cursor.line)
+				self.cursor.line = self.cursor.line - 1
+				self.cursor.position = utf8len(self.linesRaw[self.cursor.line])
+				self.linesRaw[self.cursor.line] = self.linesRaw[self.cursor.line]..line
+			end
 		else
-			local byteoffset = utf8.offset(lineStart, -1)
-	        if byteoffset then
-	            self.linesRaw[self.currentLine] = string.sub(lineStart, 1, byteoffset - 1)..lineEnd
-	            self.currentLinePosition = self.currentLinePosition - 1
-	        else
-	        	if #self.linesRaw > 1 then
-	        		if self.currentLine > 1 then
-		        		self.currentLine = self.currentLine - 1
-		        		self.linesRaw[self.currentLine] = self.linesRaw[self.currentLine]..lineEnd
-		        		table.remove(self.linesRaw, self.currentLine + 1)
-		        		self.currentLinePosition = #self.linesRaw[self.currentLine] - #lineEnd
-		        	end
-	        	end
-	        end
-	    end
-    elseif key == "tab" then
-    	self:insertText("	")
-	elseif key == "up" then
-		if love.keyboard.isDown("lshift") or love.keyboard.isDown("rshift") then
-			self.currentLine = self.currentLine - self.visibleLines
-		elseif love.keyboard.isDown("lalt") or love.keyboard.isDown("ralt") then
-			self.currentLine = self.currentLine - math.floor(self.visibleLines / 2)
-		else
-			self.currentLine = self.currentLine - 1
-		end
-		if self.currentLine < 1 then
-			self.currentLine = 1
+			self.linesRaw[self.cursor.line] = lineStart..lineEnd
+			self.cursor.position = self.cursor.position - getCharBytes(line, #line)
 		end
 
-		if #self.linesRaw[self.currentLine] < self.currentLinePosition then
-			self.currentLinePosition = #self.linesRaw[self.currentLine]
-		end
 
-		if self.currentLine < self.scroll.y then
-			self.scroll.y = self.currentLine
-		end
+
+		self:updateCursor()
 	elseif key == "down" then
-		if love.keyboard.isDown("lshift") or love.keyboard.isDown("rshift") then
-			self.currentLine = self.currentLine + self.visibleLines
-		elseif love.keyboard.isDown("lalt") or love.keyboard.isDown("ralt") then
-			self.currentLine = self.currentLine + math.floor(self.visibleLines / 2)
-		else
-			self.currentLine = self.currentLine + 1
-		end
-		if self.currentLine > #self.linesRaw then
-			self.currentLine = #self.linesRaw
+		self.cursor.line = self.cursor.line + 1
+		if self.cursor.line > #self.linesRaw then
+			self.cursor.line = #self.linesRaw
 		end
 
-		if #self.linesRaw[self.currentLine] < self.currentLinePosition then
-			self.currentLinePosition = #self.linesRaw[self.currentLine]
+		self:updateCursor()
+	elseif key == "up" then
+		self.cursor.line = self.cursor.line - 1
+		if self.cursor.line < 1 then
+			self.cursor.line = 1
 		end
 
-		if self.currentLine > self.visibleLines + self.scroll.y then
-			self.scroll.y = self.currentLine - self.visibleLines
-		end
-	elseif key == "left" then
-		if love.keyboard.isDown("lshift") or love.keyboard.isDown("rshift") then
-			self.currentLinePosition = 0
-		else
-			self.currentLinePosition = self.currentLinePosition - 1
-		end
-		if self.currentLinePosition < 0 then
-			self.currentLinePosition = 0
-		end
+		self:updateCursor()
 	elseif key == "right" then
-		if love.keyboard.isDown("lshift") or love.keyboard.isDown("rshift") then
-			self.currentLinePosition = utf8.len(self.linesRaw[self.currentLine])
-		else
-			self.currentLinePosition = self.currentLinePosition + 1
+		--getCharBytes(string, char)
+		self.cursor.position = self.cursor.position + getCharBytes(line, #line)
+		if self.cursor.position > utf8len(line) then
+			self.cursor.position = utf8len(line)
 		end
-		if self.currentLinePosition > #self.linesRaw[self.currentLine] then
-			self.currentLinePosition = #self.linesRaw[self.currentLine]
+
+		self:updateCursor()
+	elseif key == "left" then
+		self.cursor.position = self.cursor.position - getCharBytes(line, #line)
+		if self.cursor.position < 0 then
+			self.cursor.position = 0
 		end
+
+		self:updateCursor()
+	elseif key == "tab" then
+		self:insertText("	")
 	end
 end
 
@@ -395,11 +452,26 @@ function codeEditor:resize(w, h)
 end
 
 function codeEditor:insertText(text)
-	local line = self.linesRaw[self.currentLine]
-	self.linesRaw[self.currentLine] = line:sub(0, self.currentLinePosition)..text..line:sub(self.currentLinePosition + 1)
-	self.currentLinePosition = self.currentLinePosition + #text
+	local line = self.linesRaw[self.cursor.line]
+	local lineStart = utf8sub(line, 0, self.cursor.position)
+	local lineEnd = utf8sub(line, self.cursor.position+1, #line)
+
+	if self.cursor.position == 0 then
+		lineStart = ""
+	end
+
+	self.linesRaw[self.cursor.line] = lineStart..text..lineEnd
+
+	self.cursor.position = self.cursor.position + utf8len(text)
 
 	self:highlight()
+	self:updateCursor()
+end
+
+function codeEditor:countIndent(line)
+	local i = 0
+	line:gsub("(	)", function() i = i + 1 end)
+	return i
 end
 
 function codeEditor:textinput(t)
