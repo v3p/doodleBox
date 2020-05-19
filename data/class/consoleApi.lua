@@ -33,9 +33,6 @@ function new(name)
 		copyFile("data/doodle/main.lua", projectFolder.."/"..name.."/main.lua")
 		state:setState("editor")
 		state:getState():loadDoodle(name)
-		state:setState("console")
-		console:print("Doodle '"..name.."' created!", "con")
-		console:print("Press 'ctrl + e' to enter the editor", "con")
 	end
 end
 

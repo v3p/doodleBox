@@ -6,15 +6,48 @@ ceil = math.ceil
 sin = math.sin
 cos = math.cos
 tan = math.tan
-circle = love.graphics.circle
-rect = love.graphics.rectangle
+--circle = love.graphics.circle
+--rect = love.graphics.rectangle
 random = math.random
 noise = love.math.noise
 PI = math.pi
 TWO_PI = math.pi * 2
 
---Shape
+--drawing settings
+mainCanvas = lg.newCanvas()
+drawMode = "fill"
+useLoop = true
 
+--Drawing
+function clear()
+	love.graphics.clear()
+end
+
+function mode(m)
+	if m == "fill" or m == "line" then
+		drawMode = m
+	else
+		error("Invalid draw mode! Use 'fill' or 'line'")
+	end
+end
+
+function circle(x, y, radius, segments)
+	love.graphics.circle(drawMode, x, y, radius, segments)
+end
+
+function rect(x, y, width, height)
+	love.graphics.rectangle(drawMode, x, y, width, height)
+end
+
+function line(x, y, x1, y1)
+	love.graphics.line(x, y, x1, y1)
+end
+
+function noLoop()
+	useLoop = false
+end
+
+--Setup
 function loadFile(file)
 	local f = file
 	if getFileType(file) ~= ".lua" then
@@ -34,8 +67,9 @@ function size(width, height)
 end
 
 --Color
-function randomColor()
-	return {math.random(), math.random(), math.random()}
+function randomColor(alpha)
+	alpha = alpha or 1
+	return {math.random(), math.random(), math.random(), 1}
 end
 
 function color(r, g, b, a)
@@ -47,11 +81,14 @@ function color(r, g, b, a)
 end
 
 function background(r, g, b, a)
+	--lg.setCanvas(mainCanvas)
 	if not g and not b and not a then
-		love.graphics.setBackgroundColor(r, r, r, 1)
+		love.graphics.setColor(r, r, r, 1)
 	else
-		love.graphics.setBackgroundColor(r, g, b, a)
+		love.graphics.setColor(r, g, b, a)
 	end
+	lg.rectangle("fill", 0, 0, mainCanvas:getWidth(), mainCanvas:getHeight())
+	--lg.setCanvas()
 end
 
 --Math

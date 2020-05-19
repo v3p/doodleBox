@@ -8,6 +8,12 @@ kb = love.keyboard
 --GLOBALS
 projectFolder = "Doodles"
 
+platform = "pc"
+if love.system.getOS() == "Android" or love.system.getOS() == "iOS" then
+	platform = "mobile"
+end
+
+
 function love.load()
 	fs.setIdentity(NAME)
 	kb.setKeyRepeat(true)
@@ -16,6 +22,10 @@ function love.load()
 
 	--Setting up / Loading config file
 	local w, h = 800, 600
+	if platform == "mobile" then
+		w = 600
+		h = 800
+	end
 	if platform == "mobile" then
 		w, h = love.window.getDesktopDimensions()
 	end
@@ -28,7 +38,7 @@ function love.load()
 		}
 	}
 
-	--fs.remove("config.lua")
+	if platform == mobile then fs.remove("config.lua") end
 
 	--Creating config file
 	if love.filesystem.getInfo("config.lua") then
@@ -44,7 +54,7 @@ function love.load()
 
 	--Creating Window
 	local resize = true
-	if love.system.getOS() == "android" then
+	if platform == "mobile" then
 		resize = false
 	end
 
@@ -57,7 +67,8 @@ function love.load()
 	end
 
 	--Fonts
-	mainFont = lg.newFont("data/font/VCR_OSD_MONO.ttf", love.graphics.getWidth() * 0.026)
+	mainFont = lg.newFont("data/font/basis33.ttf", 24)
+	mainFont:setFilter("nearest", "nearest")
 
 	--Loading classes
 	requireFolder("data/class")
@@ -68,18 +79,6 @@ function love.load()
 	state:setState("console")
 
 	currentDoodle = false
-
-	load("snow")
-
-	local c = "		shithole"
-	local indent = 0
-	c:gsub("(	)", function() indent = indent + 1 end)
-
-	--console:print("Found "..indent.." tabs in this bitch", "con")
-
-
-
-
 end
 
 function love.update(dt)
@@ -93,6 +92,9 @@ function love.draw()
 end
 
 function love.resize(w, h)
+	if platform == "mobile" then
+		h = h * 0.6
+	end
 	state:resize(w, h)
 end
 
@@ -127,6 +129,10 @@ end
 
 function love.textinput(t)
 	state:textinput(t)
+end
+
+function love.mousepressed(x, y, k)
+	state:mousepressed(x, y, k)
 end
 
 function love.touchpressed(x, y)

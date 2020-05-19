@@ -266,7 +266,7 @@ function codeEditor:loadFile(path)
 		if lc < 1 then
 			self.linesRaw[1] = ""
 		end
-		self.file = path
+		self.file = path:match("%w+.lua")
 		self:updateCursor()
 	else
 		error("'"..path.."' does not exists.")
@@ -284,23 +284,29 @@ function codeEditor:setFont(font)
 end
 
 function codeEditor:updateCursor()
+	local line = self.linesRaw[self.cursor.line]
+	local lineStart = utf8sub(line, 0, self.cursor.position)
+	local lineEnd = utf8sub(line, self.cursor.position+1, #line)
+
+	if self.style.font:getWidth(lineStart) > self.width - self.style.sideMargin then
+		self.scroll.x = (self.width - self.style.sideMargin) - self.style.font:getWidth(lineStart) - self.cursor.width
+	else
+		self.scroll.x = 0
+	end
+
+	
+	if self.cursor.line - (self.scroll.y) >= self.visibleLines then
+		self.scroll.y = self.cursor.line - (self.visibleLines)
+	elseif self.cursor.line - (self.scroll.y) < 0 then
+		self.scroll.y = self.cursor.line
+	end
+
+
 	self.cursor.x = self.x + self.scroll.x + self.style.sideMargin + self.style.font:getWidth(utf8sub(self.linesRaw[self.cursor.line], 1, self.cursor.position))
 	self.cursor.y = self.y + self.style.topMargin + (self.fontHeight * (self.cursor.line - self.scroll.y))
 
 	if self.cursor.position == 0 then
 		self.cursor.x = self.x + self.scroll.x + self.style.sideMargin
-	end
-
-	if self.cursor.x > self.width then
-		self.scroll.x = self.scroll.x + self.width - self.cursor.x - self.cursor.width
-	elseif self.cursor.x < self.style.sideMargin then
-		self.scroll.x = self.scroll.x - self.cursor.x + self.cursorWidth + self.style.sideMargin
-	end
-
-	if self.cursor.y + self.fontHeight > self.height - self.style.topMargin then
-		self.scroll.y = self.scroll.y + 1
-	elseif self.cursor.y < self.style.topMargin then
-		self.scroll.y = self.scroll.y - 1
 	end
 end
 
@@ -322,17 +328,16 @@ function codeEditor:draw()
 	lg.setColor(self.style.color.panel)
 	lg.rectangle("fill", self.x, self.y, self.width, self.style.topMargin)
 
-	--Info
-	lg.setColor(0, 1, 0, 1)
-	lg.printf(self.file, 0, (self.style.topMargin / 2) - (self.fontHeight / 2), self.width, "center")
-
 	--Bottom Panel
 	lg.setColor(self.style.color.panel)
 	lg.rectangle("fill", self.x, self.y + self.height - self.style.topMargin, self.width, self.style.topMargin)
 
 	--Info
-	lg.setColor(0, 1, 0, 1)
+	lg.setColor(1, 1, 1, 1)
 	lg.printf(self.currentLine.."/"..#self.linesRaw, 0, self.y + self.height - self.style.topMargin + (self.style.topMargin / 2) - (self.fontHeight / 2), self.width, "left")
+
+	--Info
+	lg.printf(self.file, 0, self.height - self.style.topMargin, self.width, "center")
 
 	--Cursor
 	lg.setColor(self.style.color.cursor)
@@ -375,7 +380,7 @@ function codeEditor:keypressed(key)
 
 		self.linesRaw[self.cursor.line] = lineStart
 
-		local indent = self:countIndent(line)
+		local indent = self:countIndent(lineStart)
 		for i=1, indent do
 			lineEnd = "	"..lineEnd
 		end
@@ -412,29 +417,44 @@ function codeEditor:keypressed(key)
 
 		self:updateCursor()
 	elseif key == "down" then
-		self.cursor.line = self.cursor.line + 1
+		local step = 1
+		if kb.isDown("lshift") or kb.isDown("rshift") then
+			step = self.visibleLines
+		end
+		self.cursor.line = self.cursor.line + step
 		if self.cursor.line > #self.linesRaw then
 			self.cursor.line = #self.linesRaw
 		end
 
 		self:updateCursor()
 	elseif key == "up" then
-		self.cursor.line = self.cursor.line - 1
+		local step = 1
+		if kb.isDown("lshift") or kb.isDown("rshift") then
+			step = self.visibleLines
+		end
+		self.cursor.line = self.cursor.line - step
 		if self.cursor.line < 1 then
 			self.cursor.line = 1
 		end
 
 		self:updateCursor()
 	elseif key == "right" then
-		--getCharBytes(string, char)
-		self.cursor.position = self.cursor.position + getCharBytes(line, #line)
+		if kb.isDown("lshift") or kb.isDown("rshift") then
+			self.cursor.position = utf8len(line)
+		else
+			self.cursor.position = self.cursor.position + getCharBytes(line, #line)
+		end
 		if self.cursor.position > utf8len(line) then
 			self.cursor.position = utf8len(line)
 		end
 
 		self:updateCursor()
 	elseif key == "left" then
-		self.cursor.position = self.cursor.position - getCharBytes(line, #line)
+		if kb.isDown("lshift") or kb.isDown("rshift") then
+			self.cursor.position = 0
+		else
+			self.cursor.position = self.cursor.position - getCharBytes(line, #line)
+		end
 		if self.cursor.position < 0 then
 			self.cursor.position = 0
 		end
