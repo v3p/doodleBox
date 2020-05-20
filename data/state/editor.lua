@@ -1,27 +1,43 @@
 local editor = {}
 
+local function runButton()
+	editor:saveDoodle()
+	local status , ret = testCall(fs.load, projectFolder.."/"..currentDoodle.."/main.lua")
+	if status then
+		ret()
+		state:setState("run")
+	end
+end
+
+local function conButton()
+	state:setState("console")
+end
+
 function editor:load()
 	self.tab = {}
 	self.currentTab = 1
+	
 
 	self.height = lg.getHeight()
 	if platform == "mobile" then
-		self.height = self.height * 0.6
+		self.height = config.display.safeHeight
 	end
-	self.code = codeEditor.new(0, 0, width, self.height)
-	self.code:setFont(mainFont)
 
-	self.runBotton = {
-		x = 0,
-		y = self.height,
-		width = lg.getWidth() / 2,
-		height = self.height * 0.2
-	}
+	self:ui()
+end
+
+function editor:ui()
+	if platform == "mobile" then
+		button:clear()
+		button:new(runButton , "RUN", 0, self.height, lg.getWidth() / 2, lg.getHeight() * 0.1)
+		button:new(conButton , "CONSOLE", lg.getWidth() / 2, self.height, lg.getWidth() / 2, lg.getHeight() * 0.1)
+	end
 end
 
 function editor:loadFile(name)
 	if fs.getInfo(projectFolder.."/"..currentDoodle.."/"..name) then
 		self.tab[#self.tab + 1] = {code = codeEditor.new(0, 0, width, self.height), name = name}
+		self.tab[#self.tab].code:init()
 		self.tab[#self.tab].code:setFont(mainFont)
 		self.tab[#self.tab].code:loadFile(projectFolder.."/"..currentDoodle.."/"..name)
 	else
@@ -33,6 +49,7 @@ function editor:loadDoodle(name)
 	for i, file in ipairs(fs.getDirectoryItems(projectFolder.."/"..name)) do
 		if getFileType(file) == ".lua" then
 			self.tab[i] = {code = codeEditor.new(0, 0, width, self.height), name = file}
+			self.tab[i].code:init()
 			self.tab[i].code:setFont(mainFont)
 			self.tab[i].code:loadFile(projectFolder.."/"..name.."/"..file)
 		end
@@ -46,7 +63,7 @@ function editor:saveDoodle()
 		for i,v in ipairs(self.tab) do
 			local ok = fs.write(projectFolder.."/"..currentDoodle.."/"..v.name, v.code:stitch())
 			if ok then
-
+				console:print("Project '"..currentDoodle.."' saved", "con")
 			else
 				console:print("ERROR: Couldn't save file '"..v.name.."'!", "error")
 			end
@@ -55,11 +72,15 @@ function editor:saveDoodle()
 end
 
 function editor:update()
-	self.tab[self.currentTab].code:update()
+	if #self.tab > 0 then
+		self.tab[self.currentTab].code:update()
+	end
 end
 
 function editor:draw()
-	self.tab[self.currentTab].code:draw()
+	if #self.tab > 0 then
+		self.tab[self.currentTab].code:draw()
+	end
 
 	if kb.isDown(modKey[1]) or kb.isDown(modKey[2]) then
 		lg.setColor(0, 0, 0, 0.8)
@@ -77,9 +98,7 @@ function editor:draw()
 	end
 
 	if platform == "mobile" then
-		lg.setColor(1, 1, 1, 1)
-		lg.rectangle("line", self.runBotton.x, self.runBotton.y, self.runBotton.width, self.runBotton.height)
-		lg.printf("RUN", self.runBotton.x, self.runBotton.y, self.runBotton.width, "center")
+		button:draw()
 	end
 
 end
@@ -118,17 +137,13 @@ end
 
 function editor:resize(w, h)
 	self.tab[self.currentTab].code:resize(w, h)
+	if platform == "mobile" then
+		self:load()
+	end
 end
 
 function editor:mousepressed(x, y)
-	if pointInRect(x, y, self.runBotton.x, self.runBotton.y, self.runBotton.width, self.runBotton.height) then
-		self:saveDoodle()
-		local status , ret = testCall(fs.load, projectFolder.."/"..currentDoodle.."/main.lua")
-		if status then
-			ret()
-			state:setState("run")
-		end
-	end
+	button:press(x, y)
 end
 
 function editor:quit()

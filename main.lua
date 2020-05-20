@@ -1,45 +1,67 @@
 NAME = "DoodleBox"
 VERSION = "0.1"
+--DEbugging
+FORCE_MOBILE = false 
+IGNORE_CONFIG = false
 
+--Shortcuts cause i'm lazy
 lg = love.graphics
 fs = love.filesystem
 kb = love.keyboard
 
 --GLOBALS
-projectFolder = "Doodles"
+projectFolder = "Projects"
+docsURL = "https://github.com/v3p/doodleBox/wiki"
+
 
 platform = "pc"
 if love.system.getOS() == "Android" or love.system.getOS() == "iOS" then
 	platform = "mobile"
 end
 
+if FORCE_MOBILE then
+	platform = "mobile"
+end
 
 function love.load()
 	fs.setIdentity(NAME)
 	kb.setKeyRepeat(true)
+	lg.setDefaultFilter("nearest", "nearest")
+
+	modKey = {"lctrl", "rctrl"}
+	if love.system.getOS() == "OS X" then
+		modKey = {"lgui", "rgui"}
+	end
 
 	require("data.class.util")
 
 	--Setting up / Loading config file
-	local w, h = 800, 600
+	local w, h = 649, 460
+
+	--Flipping width and height for mobile so it goes portrait
 	if platform == "mobile" then
-		w = 600
-		h = 800
+		local _w = w
+		w = h
+		h = _w
 	end
-	if platform == "mobile" then
-		w, h = love.window.getDesktopDimensions()
-	end
+
 	config = {
 		display = {
 			width = w,
 			height = h,
 			fullscreen = false,
 			windowTitle = NAME.." ["..VERSION.."]",
+			safeHeight = math.floor(h * 0.5)
+		},
+		font = {
+			face = "basis33.ttf",
+			size = 24
 		}
 	}
 
-	if platform == mobile then fs.remove("config.lua") end
-
+	if IGNORE_CONFIG then
+		fs.remove("config.lua")
+	end
 	--Creating config file
 	if love.filesystem.getInfo("config.lua") then
 		config = fs.load("config.lua")()
@@ -47,9 +69,9 @@ function love.load()
 		saveConfig()
 	end
 
-	--Creating doodle directory
-	if not fs.getInfo("Doodles") then
-		fs.createDirectory("Doodles")
+	--Creating project directory
+	if not fs.getInfo(projectFolder) then
+		fs.createDirectory(projectFolder)
 	end
 
 	--Creating Window
@@ -61,13 +83,8 @@ function love.load()
 	love.window.setMode(config.display.width, config.display.height, {resizable = resize, fullscreen = config.display.fullscreen, display = config.display.display, usedpiscale = false})
 	love.window.setTitle(config.display.windowTitle)
 
-	modKey = {"lctrl", "rctrl"}
-	if love.system.getOS() == "OS X" then
-		modKey = {"lgui", "rgui"}
-	end
-
 	--Fonts
-	mainFont = lg.newFont("data/font/basis33.ttf", 24)
+	mainFont = lg.newFont("data/font/"..config.font.face, config.font.size)
 	mainFont:setFilter("nearest", "nearest")
 
 	--Loading classes
@@ -92,10 +109,7 @@ function love.draw()
 end
 
 function love.resize(w, h)
-	if platform == "mobile" then
-		h = h * 0.6
-	end
-	state:resize(w, h)
+	state:resize()
 end
 
 function love.keypressed(key)

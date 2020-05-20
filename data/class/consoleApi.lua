@@ -1,27 +1,63 @@
 function help()
 	local h = {
-		{f = "new([name])", e = "Creates a new doodle and takes you to the code editor", c = 'new("Mydoodle")'},
-		{f = "load(name)", e = "Loads a doodle", c = 'load("Mydoodle")'},
-		{f = "rename(name)", e = "Renames the current doodle", c = 'rename("AmazingDoodle34")'},
-		{f = "delete(name)", e = "PERMANENTLY deletes a doodle.", c = 'delete("f**k this doodle")', w = "THIS IS IRREVERSABLE."},
-		{f = "run(name)", e = "Runs a doodle", c = 'run("Mydoodle")'},
-		{f = "ls()", e = "Lists all doodles", c = 'ls()'},
-		{f = "showDoodles()", e = "Opens the doodles folder in your OS", c = 'showDoodles()'}
+		{f = "new([name])", e = "Start a new project"},
+		{f = "load(name)", e = "Loads a project"},
+		{f = "rename(name)", e = "Renames the current project"},
+		{f = "delete(name)", e = "PERMANENTLY deletes a project."},
+		{f = "ls()", e = "Lists all projects"},
+		{f = "openProjectFolder()", e = "Opens the projects folder in your OS"},
+		{f = "docs()", e = "Opens your web browser and takes you to the full documentation (Hosted on github)"}
 	}
 
-	console:print("")
-	console:print("Here's some basic functions", "con")
-	console:print("Any argument with [square brackets] around it is optional", "altInfo")
+	console:print("Here's some basic functions to get you started!", "con")
 	for i,v in ipairs(h) do
-		console:print("'"..v.f.."': "..v.e, "info")
-		console:print("Example: "..v.c, "altInfo")
+		console:print(v.f..": "..v.e, "info")
 		if v.w then
 			console:print("WARNING: "..v.w, "error")
 		end
-		console:print("")
+	end
+end
+
+function fontSize(s)
+	config.font.size = s
+	mainFont = lg.newFont("data/font/"..config.font.face, config.font.size)
+	state:getState().con:setFont(mainFont)
+	state:getState().con:resize()
+
+	if currentDoodle then
+		state:setState("editor")
+		state:getState():resize()
+		state:setState("console")
 	end
 
-	console:print("The full documentation is available online somewhere (:", "altInfo")
+	console:print("Font size changed to "..s, "con")
+	saveConfig()
+end
+
+function safeHeight(height)
+	config.display.safeHeight = height
+	saveConfig()
+	love.event.quit("restart")
+end
+
+function listFunctions()
+	local line = ""
+	local perLine = 5
+	local curLine = 0
+	console:print("Doodle functions:", "con")
+	for i,v in ipairs(_FUNCTIONS) do
+		line = line..v.."(), "
+		curLine = curLine + 1
+		if curLine > perLine then
+			console:print(line, "info")
+			line = ""
+			curLine = 0
+		end
+	end
+end
+
+function reload()
+	love.event.quit("restart")
 end
 
 function new(name)
@@ -53,6 +89,10 @@ function renameDoodle(name)
 end
 
 function newFile(name)
+	if getFileType(name) ~= ".lua" then
+		name = name..".lua"
+	end
+
 	if currentDoodle then
 		if fs.getInfo(projectFolder.."/"..currentDoodle.."/"..name) then
 			console:print("ERROR: File '"..name.."' already exists!", "error")
@@ -107,8 +147,10 @@ function delete(name)
 	if name then
 		if fs.getInfo(projectFolder.."/"..name) then
 
-			fs.remove(projectFolder.."/"..name.."/main.lua")
-			fs.remove(projectFolder.."/"..name)
+			for i,v in ipairs(fs.getDirectoryItems(projectFolder.."/"..name)) do
+				fs.remove(projectFolder.."/"..name.."/"..v)
+			end
+				fs.remove(projectFolder.."/"..name)
 
 			console:print("Doodle '"..name.."' permanently deleted", "con")
 		else
@@ -128,8 +170,12 @@ function ls()
 	end
 end
 
-function showDoodles()
+function openProjecFolder()
 	love.system.openURL("file://"..love.filesystem.getSaveDirectory().."/"..projectFolder)
+end
+
+function docs()
+	love.system.openURL(docsURL)
 end
 
 function export()

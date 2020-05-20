@@ -30,17 +30,20 @@ local syntaxColor = {
 	comment = {0.3, 0.3, 0.3, 1}
 }
 
-local keywords = {"and", "break", "do", "else", "elseif", "end", "false", "for", "function", "if", 
-			      "in", "local", "nil", "not", "or", "repeat", "return", "then", "true", "until", "while", "pairs", "ipairs"}
-
-local functions = {
-	"width", "height", "floor", "ceil", "sin", "cos", "tan", "circle", "rect", "random", "noise", "size", "randomColor",
-	"color", "background", "normal", "lerp", "clamp", "dist", "PI", "TWO_PI", "mouseX", "mouseY"
+local _LUA_FUNCTIONS = {
+	
 }
 
+function codeEditor:init()
+	self.keywords = {"and", "break", "do", "else", "elseif", "end", "false", "for", "function", "if", 
+				      "in", "local", "nil", "not", "or", "repeat", "return", "then", "true", "until", "while", "pairs", "ipairs", "self"}
 
-local symbols = {"+", "-", "*", "/", "%", "^", "#", "=", "==", "=>", "<=", "~", 
-				 "<", ">", "(", ")", "{", "}", "[", "]", ";", ":", ",", "."}
+	self.functions = _FUNCTIONS
+
+
+	self.symbols = {"+", "-", "*", "/", "%", "^", "#", "=", "==", "=>", "<=", "~", 
+					 "<", ">", "(", ")", "{", "}", "[", "]", ";", ":", ",", "."}
+end
 
 --Various helper functions
 --STRING FUNCTIONS	
@@ -102,9 +105,9 @@ local function utf8sub(str, s, e)
 end
 
 --Syntax highligting helpers
-local function isKeyword(w)
+function codeEditor:isKeyword(w)
 	local is = false
-	for k,v in pairs(keywords) do
+	for k,v in pairs(self.keywords) do
 		if w == v then
 			is = true
 			break
@@ -113,9 +116,9 @@ local function isKeyword(w)
 	return is
 end
 
-local function isSymbol(w)
+function codeEditor:isSymbol(w)
 	local is = false
-	for k,v in pairs(symbols) do
+	for k,v in pairs(self.symbols) do
 		if w == v then
 			is = true
 			break
@@ -124,9 +127,9 @@ local function isSymbol(w)
 	return is
 end
 
-local function isFunction(w)
+function codeEditor:isFunction(w)
 	local is = false
-	for k,v in pairs(functions) do
+	for k,v in pairs(self.functions) do
 		if w == v then
 			is = true
 			break
@@ -220,13 +223,13 @@ function codeEditor:highlight()
 		local isString = false
 		local isComment = false
 		for i,v in ipairs(list) do
-			if isKeyword(v) and not isString then
+			if self:isKeyword(v) and not isString then
 				textList[#textList + 1] = syntaxColor.keyword
 				textList[#textList + 1] = v
-			elseif isSymbol(v) and not isString then
+			elseif self:isSymbol(v) and not isString then
 				textList[#textList + 1] = syntaxColor.symbol
 				textList[#textList + 1] = v
-			elseif isFunction(v) and not isString then
+			elseif self:isFunction(v) and not isString then
 				textList[#textList + 1] = syntaxColor.functions
 				textList[#textList + 1] = v
 			elseif tonumber(v) and not isString then
@@ -466,8 +469,18 @@ function codeEditor:keypressed(key)
 end
 
 function codeEditor:resize(w, h)
+	w = w or self.width
+	h = h or self.height
+	
+	if platform == "mobile" then
+		
+	end
+	self.style.font = mainFont
+	self.fontHeight = self.style.font:getAscent() - self.style.font:getDescent()
 	self.width = w
 	self.height = h
+	self.style.sideMargin = self.style.font:getWidth("9999")
+	self.style.topMargin = self.fontHeight
 	self.visibleLines = math.floor((self.height - (self.style.topMargin * 2)) / (self.style.font:getAscent() - self.style.font:getDescent())) - 1
 end
 

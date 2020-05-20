@@ -23,6 +23,7 @@ end
 function state:setState(name)
 	self.stateName = name
 	self.currentState = self.state[name]
+	button:clear()
 	if type(self.currentState.load) == "function" then
 		if not self.loadedStates[name] then
 			self.currentState:load()
@@ -32,6 +33,10 @@ function state:setState(name)
 				self.currentState:load()
 			end
 		end
+	end
+
+	if type(self.currentState.ui) == "function" then
+		self.currentState:ui()
 	end
 end
 

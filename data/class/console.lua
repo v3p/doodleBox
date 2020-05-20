@@ -209,8 +209,13 @@ function console:init(x, y, width, height, visible, font)
 end
 
 function console:resize(width, height)
+	width = width or self.width
+	height = height or self.height
 	self.width = width
 	self.height = height
+	if platform == "mobile" then
+		self.height = mobileHeight
+	end
 	self.textBox.width = width
 	self.textBox.y = height - self.textBox.height
 	self.history.width = width
