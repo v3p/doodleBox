@@ -150,7 +150,7 @@ function delete(name)
 			for i,v in ipairs(fs.getDirectoryItems(projectFolder.."/"..name)) do
 				fs.remove(projectFolder.."/"..name.."/"..v)
 			end
-				fs.remove(projectFolder.."/"..name)
+			fs.remove(projectFolder.."/"..name)
 
 			console:print("Doodle '"..name.."' permanently deleted", "con")
 		else
@@ -162,15 +162,15 @@ function delete(name)
 end
 
 function ls()
-	console:print("Doodles:", "con")
-	for i,v in ipairs(fs.getDirectoryItems("Doodles")) do
+	console:print("Projects:", "con")
+	for i,v in ipairs(fs.getDirectoryItems(projectFolder)) do
 		if v ~= ".DS_Store" then
 			console:print(v, "info")
 		end
 	end
 end
 
-function openProjecFolder()
+function openProjectFolder()
 	love.system.openURL("file://"..love.filesystem.getSaveDirectory().."/"..projectFolder)
 end
 
@@ -179,12 +179,56 @@ function docs()
 end
 
 function export()
---compressedData = love.data.compress( container, format, rawstring, level )
-	local fdata = fs.newFileData(projectFolder.."/"..currentDoodle.."/main.lua")
-	local d = love.data.compress("string", "zlib", fdata, -1)
-	fs.write("test.zip", d)
+	if currentDoodle then
+
+		if fs.getInfo(exportFolder.."/"..currentDoodle) then
+			--Delete the export if it already exists
+			for i,v in ipairs(fs.getDirectoryItems(exportFolder.."/"..currentDoodle)) do
+				fs.remove(exportFolder.."/"..currentDoodle.."/"..v)
+			end
+			fs.remove(exportFolder.."/"..currentDoodle)
+		end
+
+		--Embeddin
+		--Copying files and such
+		fs.createDirectory(exportFolder.."/"..currentDoodle)
+
+		--Copying the doodle API Class
+		copyFile("data/class/doodleAPI.lua", exportFolder.."/"..currentDoodle.."/doodleAPI.lua")
+
+		for i,file in ipairs(fs.getDirectoryItems(projectFolder.."/"..currentDoodle)) do
+			copyFile(projectFolder.."/"..currentDoodle.."/"..file, exportFolder.."/"..currentDoodle.."/"..file)
+		end
+		--Modifying main.lua to work with vanilla love
+		local main = fs.read(exportFolder.."/"..currentDoodle.."/main.lua")
+		--main = 'require("doodleAPI")\n'..main
+
+		main = "currentDoodle = '"..currentDoodle.."'\n"..main
+		main = main:gsub("function setup%(%)", "function love.load()\n	require('doodleAPI')")
+		main = main:gsub("function update%(dt%)", "function love.update(dt)\n	mouseX, mouseY = love.mouse.getPosition()")
+		main = main:gsub("function draw%(%)", "function love.draw()")
+
+		fs.write(exportFolder.."/"..currentDoodle.."/main.lua", main)
+
+		console:print("Exported project '"..currentDoodle.."'", "con")
+		love.system.openURL("file://"..love.filesystem.getSaveDirectory().."/"..exportFolder)
+	else
+		console:print("ERROR: No doodle loaded!", "error")
+	end
 end
 
-function editor()
-	state:setState("editor")
-end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

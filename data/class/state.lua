@@ -36,7 +36,7 @@ function state:setState(name)
 	end
 
 	if type(self.currentState.ui) == "function" then
-		self.currentState:ui()
+		self.currentState:switch()
 	end
 end
 

@@ -11,6 +11,7 @@ kb = love.keyboard
 
 --GLOBALS
 projectFolder = "Projects"
+exportFolder = "Export"
 docsURL = "https://github.com/v3p/doodleBox/wiki"
 
 
@@ -73,6 +74,10 @@ function love.load()
 	if not fs.getInfo(projectFolder) then
 		fs.createDirectory(projectFolder)
 	end
+	--Creating project directory
+	if not fs.getInfo(exportFolder) then
+		fs.createDirectory(exportFolder)
+	end
 
 	--Creating Window
 	local resize = true
@@ -109,7 +114,12 @@ function love.draw()
 end
 
 function love.resize(w, h)
-	state:resize()
+	config.display.width = w
+	config.display.height = h
+	width = config.display.width
+	height = config.display.height
+	mainCanvas = lg.newCanvas(config.display.width, config.display.height)
+	state:resize(w, h)
 end
 
 function love.keypressed(key)
@@ -130,15 +140,7 @@ function love.keypressed(key)
 	end
 
 	--Navigation
-	if kb.isDown(modKey[1]) or kb.isDown(modKey[2]) then
-		if key == "e" then
-			if currentDoodle then
-				state:setState("editor")
-			else
-				console:print("ERROR: No doodle loaded!", "error")
-			end
-		end
-	end
+
 end
 
 function love.textinput(t)

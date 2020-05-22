@@ -11,27 +11,47 @@ function vec.new(x, y)
 	return setmetatable(v, vm)
 end
 
+function vec.subtract(v1, v2)
+	local v = vec.new()
+	v.x = v1.x - v2.x
+	v.y = v1.y - v2.y
+	return v
+end
+
+function vec.add(v1, v2)
+	local v = vec.new()
+	v.x = v1.x + v2.x
+	v.y = v1.y + v2.y
+	return v
+end
+
+function vec.multiply(v1, v2)
+	local v = vec.new()
+	v.x = v1.x * v2.x
+	v.y = v1.y * v2.y
+	return v
+end
+
+function vec.divide(v1, v2)
+	local v = vec.new()
+	v.x = v1.x / v2.x
+	v.y = v1.y / v2.y
+	return v
+end
+
+function vec.angle(v1, v2)
+	return math.atan2(v2.y-v1.y, v2.x-v1.x)
+end
+
+function vec.dist(v1, v2)
+	return ((v2.x-v1.x)^2+(v2.y-v1.y)^2)^0.5
+end
+
 function vec:set(x, y)
 	x = x or 0
 	y = y or 0
 	self.x = x
 	self.y = y
-end
-
-function vec:setX(x)
-	self.x = x
-end
-
-function vec:getX()
-	return self.x
-end
-
-function vec:setY(y)
-	self.y = y
-end
-
-function vec:getY()
-	return self.y
 end
 
 function vec:setAngle(angle)
@@ -44,9 +64,6 @@ function vec:getAngle()
 	return math.atan2(self.y, self.x)
 end
 
-function vec:angleTo(v2)
-	return math.atan2(v2.y-self.y, v2.x-self.x)
-end
 
 function vec:setLength(length)
 	local a = self:getAngle()
@@ -60,24 +77,42 @@ end
 
 function vec:add(v2, dt)
 	dt = dt or 1
-	self.x = self.x + v2.x
-	self.y = self.y + v2.y
+	if type(v2) == "number" then
+		val = v2
+		v2 = {x = val, y = val}
+	end
+	self.x = self.x + v2.x * dt
+	self.y = self.y + v2.y * dt
 end
 
 function vec:sub(v2, dt)
 	dt = dt or 1
-	self.x = self.x - v2.x
-	self.y = self.y - v2.y
+	if type(v2) == "number" then
+		val = v2
+		v2 = {x = val, y = val}
+	end
+	self.x = self.x - v2.x * dt
+	self.y = self.y - v2.y * dt
 end
 
-function vec:mult(v)
-	self.x = self.x * v
-	self.y = self.y * v
+function vec:mult(v2, dt)
+	dt = dt or 1
+	if type(v2) == "number" then
+		val = v2
+		v2 = {x = val, y = val}
+	end
+	self.x = self.x * v2.x * dt
+ 	self.y = self.y * v2.y * dt
 end
 
 function vec:div(v)
-	self.x = self.x / v
-	self.y = self.y / v
+	dt = dt or 1
+	if type(v2) == "number" then
+		val = v2
+		v2 = {x = val, y = val}
+	end
+	self.x = self.x / v2.x
+	self.y = self.y / v2.y
 end
 
 function vec:limit(v)

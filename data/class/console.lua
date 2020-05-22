@@ -151,7 +151,8 @@ function console:init(x, y, width, height, visible, font)
 		info = {0.1, 0.6, 1, 1},
 		altInfo = {0.7, 0.4, 0.1, 1},
 		con = {0.1, 1, 0.3, 1},
-		error = {0.9, 0.2, 0.2, 1}
+		error = {0.9, 0.2, 0.2, 1},
+		run = {0.9, 0.9, 0.1, 1}
 	}
 
 	--Options

@@ -27,6 +27,7 @@ local syntaxColor = {
 	string = {1, 0, 1, 1},
 	number = {1, 1, 0, 1},
 	functions = {0.2, 1, 0.2, 1},
+	globals = {0.8, 0.2, 0.2, 1},
 	comment = {0.3, 0.3, 0.3, 1}
 }
 
@@ -39,6 +40,7 @@ function codeEditor:init()
 				      "in", "local", "nil", "not", "or", "repeat", "return", "then", "true", "until", "while", "pairs", "ipairs", "self"}
 
 	self.functions = _FUNCTIONS
+	self.globals = _GLOBALS
 
 
 	self.symbols = {"+", "-", "*", "/", "%", "^", "#", "=", "==", "=>", "<=", "~", 
@@ -108,6 +110,17 @@ end
 function codeEditor:isKeyword(w)
 	local is = false
 	for k,v in pairs(self.keywords) do
+		if w == v then
+			is = true
+			break
+		end
+	end
+	return is
+end
+
+function codeEditor:isGlobal(w)
+	local is = false
+	for k,v in pairs(self.globals) do
 		if w == v then
 			is = true
 			break
@@ -231,6 +244,9 @@ function codeEditor:highlight()
 				textList[#textList + 1] = v
 			elseif self:isFunction(v) and not isString then
 				textList[#textList + 1] = syntaxColor.functions
+				textList[#textList + 1] = v
+			elseif self:isGlobal(v) and not isString then
+				textList[#textList + 1] = syntaxColor.globals
 				textList[#textList + 1] = v
 			elseif tonumber(v) and not isString then
 				textList[#textList + 1] = syntaxColor.number
@@ -395,14 +411,21 @@ function codeEditor:keypressed(key)
 
 		self:updateCursor()
 	elseif key == "backspace" then
+
 		local lineStart = utf8sub(line, 0, self.cursor.position)
 		local lineEnd = utf8sub(line, self.cursor.position+1, #line)
+		local clearLine = false
 
 		if self.cursor.position == 0 then
 			lineStart = ""
 		end
 
-		lineStart = utf8sub(lineStart, 1, -2)
+		if kb.isDown("lshift") or kb.isDown("rshift") then
+			lineStart = ""
+			clearLine = true
+		else
+			lineStart = utf8sub(lineStart, 1, -2)
+		end
 
 		if self.cursor.position < 1 then
 			if self.cursor.line > 1 then
@@ -413,7 +436,11 @@ function codeEditor:keypressed(key)
 			end
 		else
 			self.linesRaw[self.cursor.line] = lineStart..lineEnd
-			self.cursor.position = self.cursor.position - getCharBytes(line, #line)
+			if clearLine then
+				self.cursor.position = 0
+			else
+				self.cursor.position = self.cursor.position - getCharBytes(line, #line)
+			end
 		end
 
 
@@ -429,6 +456,11 @@ function codeEditor:keypressed(key)
 			self.cursor.line = #self.linesRaw
 		end
 
+		local len = utf8len(self.linesRaw[self.cursor.line])
+		if len < self.cursor.position then
+			self.cursor.position = len
+		end
+
 		self:updateCursor()
 	elseif key == "up" then
 		local step = 1
@@ -438,6 +470,11 @@ function codeEditor:keypressed(key)
 		self.cursor.line = self.cursor.line - step
 		if self.cursor.line < 1 then
 			self.cursor.line = 1
+		end
+
+		local len = utf8len(self.linesRaw[self.cursor.line])
+		if len < self.cursor.position then
+			self.cursor.position = len
 		end
 
 		self:updateCursor()
@@ -472,9 +509,6 @@ function codeEditor:resize(w, h)
 	w = w or self.width
 	h = h or self.height
 	
-	if platform == "mobile" then
-		
-	end
 	self.style.font = mainFont
 	self.fontHeight = self.style.font:getAscent() - self.style.font:getDescent()
 	self.width = w

@@ -13,42 +13,56 @@ local function conButton()
 	state:setState("console")
 end
 
+local function tabButton()
+	editor.currentTab = editor.currentTab + 1
+	if editor.currentTab > #editor.tab then
+		editor.currentTab = 1
+	end
+end
+
 function editor:load()
 	self.tab = {}
 	self.currentTab = 1
 	
 
-	self.height = lg.getHeight()
-	if platform == "mobile" then
-		self.height = config.display.safeHeight
-	end
+	self.height = config.display.height
 
+	self:switch()
+end
+
+function editor:switch()
+	self:resize(config.display.width, config.display.height)
 	self:ui()
 end
 
 function editor:ui()
 	if platform == "mobile" then
 		button:clear()
-		button:new(runButton , "RUN", 0, self.height, lg.getWidth() / 2, lg.getHeight() * 0.1)
-		button:new(conButton , "CONSOLE", lg.getWidth() / 2, self.height, lg.getWidth() / 2, lg.getHeight() * 0.1)
+		button:new(runButton , "RUN", 0, self.height, lg.getWidth() / 3, lg.getHeight() * 0.05)
+		button:new(conButton , "CONSOLE", (lg.getWidth() / 3), self.height, lg.getWidth() / 3, lg.getHeight() * 0.05)
+		button:new(tabButton , "TAB", (lg.getWidth() / 3) * 2, self.height, lg.getWidth() / 3, lg.getHeight() * 0.05)
 	end
 end
 
 function editor:loadFile(name)
 	if fs.getInfo(projectFolder.."/"..currentDoodle.."/"..name) then
-		self.tab[#self.tab + 1] = {code = codeEditor.new(0, 0, width, self.height), name = name}
+		self.tab[#self.tab + 1] = {code = codeEditor.new(0, 0, config.display.width, self.height), name = name}
 		self.tab[#self.tab].code:init()
 		self.tab[#self.tab].code:setFont(mainFont)
 		self.tab[#self.tab].code:loadFile(projectFolder.."/"..currentDoodle.."/"..name)
 	else
 		console:print("ERROR: File '"..name.."' does not exists!", "error")
 	end
+
+	if platform == "mobile" then
+		self:resize()
+	end
 end
 
 function editor:loadDoodle(name)
 	for i, file in ipairs(fs.getDirectoryItems(projectFolder.."/"..name)) do
 		if getFileType(file) == ".lua" then
-			self.tab[i] = {code = codeEditor.new(0, 0, width, self.height), name = file}
+			self.tab[i] = {code = codeEditor.new(0, 0, config.display.width, self.height), name = file}
 			self.tab[i].code:init()
 			self.tab[i].code:setFont(mainFont)
 			self.tab[i].code:loadFile(projectFolder.."/"..name.."/"..file)
@@ -63,7 +77,7 @@ function editor:saveDoodle()
 		for i,v in ipairs(self.tab) do
 			local ok = fs.write(projectFolder.."/"..currentDoodle.."/"..v.name, v.code:stitch())
 			if ok then
-				console:print("Project '"..currentDoodle.."' saved", "con")
+				
 			else
 				console:print("ERROR: Couldn't save file '"..v.name.."'!", "error")
 			end
@@ -84,7 +98,7 @@ function editor:draw()
 
 	if kb.isDown(modKey[1]) or kb.isDown(modKey[2]) then
 		lg.setColor(0, 0, 0, 0.8)
-		lg.rectangle("fill", 0, 0, lg.getWidth(), lg.getHeight())
+		lg.rectangle("fill", 0, 0, math.floor(config.display.width / 2), config.display.height)
 		lg.setColor(0, 0.5, 1, 1)
 
 		for i,v in ipairs(self.tab) do
@@ -104,9 +118,12 @@ function editor:draw()
 end
 
 function editor:keypressed(key)
-	self.tab[self.currentTab].code:keypressed(key)
+	if #self.tab > 0 then
+		self.tab[self.currentTab].code:keypressed(key)
+	end
 
 	if key == "escape" then
+		self:saveDoodle()
 		state:setState("console")
 	end
 
@@ -136,9 +153,15 @@ function editor:textinput(t)
 end
 
 function editor:resize(w, h)
-	self.tab[self.currentTab].code:resize(w, h)
 	if platform == "mobile" then
-		self:load()
+		self.height = config.display.safeHeight
+	else
+		self.height = h
+	end
+
+	for i,v in ipairs(self.tab) do
+		self.tab[i].code:resize(w, self.height)
+		self.tab[i].code:updateCursor()
 	end
 end
 
@@ -147,7 +170,7 @@ function editor:mousepressed(x, y)
 end
 
 function editor:quit()
-	--self:saveDoodle()
+	self:saveDoodle()
 end
 
 return editor
