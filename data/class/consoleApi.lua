@@ -113,6 +113,10 @@ function newFile(name)
 	end
 end
 
+function copyFile(file, dest)
+	
+end
+
 function deleteFile(name)
 	if getFileType(name) ~= ".lua" then
 		name = name..".lua"

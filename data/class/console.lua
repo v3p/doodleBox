@@ -148,12 +148,23 @@ function console:init(x, y, width, height, visible, font)
 	love.keyboard.setKeyRepeat(visible)
 
 	self.color = {
-		info = {0.1, 0.6, 1, 1},
-		altInfo = {0.7, 0.4, 0.1, 1},
-		con = {0.1, 1, 0.3, 1},
-		error = {0.9, 0.2, 0.2, 1},
-		run = {0.9, 0.9, 0.1, 1}
+		info = convertColor(227, 173, 57, 255),
+		altInfo = convertColor(58, 190, 254, 255),
+		con = convertColor(0, 211, 100, 255),
+		error = convertColor(224, 91, 91, 255),
+		run = convertColor(245, 43, 162, 255)
 	}
+
+	--[[local syntaxColor = {
+	text = {0.9, 0.9, 0.9, 1},
+	keyword = convertColor(0, 211, 100, 255),
+	symbol = {0.9, 0.9, 0.9, 1},
+	string = convertColor(245, 43, 162, 255),
+	number = convertColor(227, 173, 57, 255),
+	functions = convertColor(58, 190, 254, 255),
+	globals = convertColor(224, 91, 91, 255),
+	comment = {0.3, 0.3, 0.3, 1}
+}]]
 
 	--Options
 	self.x = x

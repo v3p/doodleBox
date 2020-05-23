@@ -116,6 +116,12 @@ function size(_width, _height)
 	height = _height
 end
 
+function close()
+	love.window.setMode(config.display.width, config.display.height, {resizable = true, fullscreen = config.display.fullscreen, display = config.display.display, usedpiscale = false})
+	love.window.setTitle(config.display.windowTitle)
+	state:setState("editor")
+end
+
 function newCanvas(w, h)
 	return lg.newCanvas(w, h)
 end
@@ -184,6 +190,10 @@ end
 --INPUT
 function keyDown(key)
 	return love.keyboard.isDown(key)
+end
+
+function mouseDown(key)
+	return love.mouse.isDown(key)
 end
 
 --CALLBACKS (for exporting)

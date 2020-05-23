@@ -22,12 +22,12 @@ local default_style = {
 
 local syntaxColor = {
 	text = {0.9, 0.9, 0.9, 1},
-	keyword = {0, 0.5, 1, 1},
-	symbol = {1, 0.5, 0, 1},
-	string = {1, 0, 1, 1},
-	number = {1, 1, 0, 1},
-	functions = {0.2, 1, 0.2, 1},
-	globals = {0.8, 0.2, 0.2, 1},
+	keyword = convertColor(0, 211, 100, 255),
+	symbol = {0.9, 0.9, 0.9, 1},
+	string = convertColor(245, 43, 162, 255),
+	number = convertColor(227, 173, 57, 255),
+	functions = convertColor(58, 190, 254, 255),
+	globals = convertColor(224, 91, 91, 255),
 	comment = {0.3, 0.3, 0.3, 1}
 }
 
@@ -265,6 +265,8 @@ function codeEditor:highlight()
 				textList[#textList + 1] = syntaxColor.text
 				textList[#textList + 1] = v
 			end
+
+
 			last = v
 		end
 		self.linesHighlight[#self.linesHighlight + 1] = lg.newText(self.style.font, textList)

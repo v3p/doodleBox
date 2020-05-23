@@ -139,10 +139,14 @@ function love.keypressed(key)
 			love.window.setTitle(config.display.windowTitle)
 			state:setState("editor")
 		end
+	elseif key == "f2" then
+		love.graphics.captureScreenshot(os.time()..".png")		
 	end
 
-	--Navigation
+end
 
+function love.keyreleased(key)
+	state:keyreleased(key)
 end
 
 function love.textinput(t)
@@ -153,8 +157,12 @@ function love.mousepressed(x, y, k)
 	state:mousepressed(x, y, k)
 end
 
-function love.touchpressed(x, y)
-	love.keyboard.setTextInput(not love.keyboard.hasTextInput())
+function love.mousereleased(x, y, k)
+	state:mousereleased(x, y, k)
+end
+
+function love.touchpressed(id, x, y)
+	state:touchpressed(id, x, y)
 end
 
 function love.quit()

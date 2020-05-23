@@ -42,8 +42,8 @@ end
 
 function run:keypressed(key)
 	if useLoop then
-		if type(keypressed) == "function" then
-			local status, err = pcall(keypressed, key)
+		if type(keypress) == "function" then
+			local status, err = pcall(keypress, key)
 			if not status then
 				state:setState("console")
 				console:print("ERROR: "..err, "error")
@@ -54,8 +54,32 @@ end
 
 function run:keyreleased(key)
 	if useLoop then
-		if type(keypressed) == "function" then
-			local status, err = pcall(keyreleased, key)
+		if type(keyrelease) == "function" then
+			local status, err = pcall(keyrelease, key)
+			if not status then
+				state:setState("console")
+				console:print("ERROR: "..err, "error")
+			end
+		end
+	end
+end
+
+function run:mousepressed(x, y, k)
+	if useLoop then
+		if type(mousepress) == "function" then
+			local status, err = pcall(mousepress, x, y, k)
+			if not status then
+				state:setState("console")
+				console:print("ERROR: "..err, "error")
+			end
+		end
+	end
+end
+
+function run:mousereleased(x, y, k)
+	if useLoop then
+		if type(mouserelease) == "function" then
+			local status, err = pcall(mouserelease, key)
 			if not status then
 				state:setState("console")
 				console:print("ERROR: "..err, "error")
