@@ -74,12 +74,6 @@ function run:mousepressed(x, y, k)
 			end
 		end
 	end
-
-	if platform == "mobile" then
-		love.window.setMode(config.display.width, config.display.height, {resizable = true, fullscreen = config.display.fullscreen, display = config.display.display, usedpiscale = false})
-		love.window.setTitle(config.display.windowTitle)
-		state:setState("editor")
-	end
 end
 
 function run:mousereleased(x, y, k)

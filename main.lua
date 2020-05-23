@@ -155,6 +155,7 @@ end
 
 function love.mousepressed(x, y, k)
 	state:mousepressed(x, y, k)
+	love.keyboard.setTextInput(not love.keyboard.hasTextInput())
 end
 
 function love.mousereleased(x, y, k)
