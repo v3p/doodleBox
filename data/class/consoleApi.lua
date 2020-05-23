@@ -18,6 +18,7 @@ function help()
 	end
 end
 
+
 function fontSize(s)
 	config.font.size = s
 	mainFont = lg.newFont("data/font/"..config.font.face, config.font.size)
@@ -40,7 +41,7 @@ function safeHeight(height)
 	love.event.quit("restart")
 end
 
-function listFunctions()
+function api()
 	local line = ""
 	local perLine = 5
 	local curLine = 0
@@ -102,12 +103,29 @@ function newFile(name)
 				console:print("File '"..name.."' created!", "con")
 				state:setState("editor")
 				state:getState():loadFile(name)
+				state:getState().currentTab = #state:getState().tab
 			else
 				console:print("ERROR: Couldn't create file!", "error")
 			end
 		end
 	else
 		console:print("ERROR: No doodle loaded!", "error")
+	end
+end
+
+function deleteFile(name)
+	if getFileType(name) ~= ".lua" then
+		name = name..".lua"
+	end
+	if fs.getInfo(projectFolder.."/"..currentDoodle.."/"..name) then
+		fs.remove(projectFolder.."/"..currentDoodle.."/"..name)
+		console:print("File '"..name.."' deleted.", "con")
+
+		state:setState("editor")
+		state:getState():unloadFile(name)
+		state:setState("console")
+	else
+		console:print("File '"..name.."' doesn't exists!", "error")
 	end
 end
 

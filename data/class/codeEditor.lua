@@ -447,34 +447,52 @@ function codeEditor:keypressed(key)
 
 		self:updateCursor()
 	elseif key == "down" then
-		local step = 1
-		if kb.isDown("lshift") or kb.isDown("rshift") then
-			step = self.visibleLines
-		end
-		self.cursor.line = self.cursor.line + step
-		if self.cursor.line > #self.linesRaw then
-			self.cursor.line = #self.linesRaw
-		end
+		if kb.isDown(modKey[1]) or kb.isDown(modKey[2]) then
+			if self.cursor.line < #self.linesRaw then
+				local nextLine = self.linesRaw[self.cursor.line + 1]
+				self.linesRaw[self.cursor.line + 1] = self.linesRaw[self.cursor.line]
+				self.linesRaw[self.cursor.line ] = nextLine
+				self.cursor.line = self.cursor.line + 1
+			end
+		else
+			local step = 1
+			if kb.isDown("lshift") or kb.isDown("rshift") then
+				step = self.visibleLines
+			end
+			self.cursor.line = self.cursor.line + step
+			if self.cursor.line > #self.linesRaw then
+				self.cursor.line = #self.linesRaw
+			end
 
-		local len = utf8len(self.linesRaw[self.cursor.line])
-		if len < self.cursor.position then
-			self.cursor.position = len
+			local len = utf8len(self.linesRaw[self.cursor.line])
+			if len < self.cursor.position then
+				self.cursor.position = len
+			end
 		end
 
 		self:updateCursor()
 	elseif key == "up" then
-		local step = 1
-		if kb.isDown("lshift") or kb.isDown("rshift") then
-			step = self.visibleLines
-		end
-		self.cursor.line = self.cursor.line - step
-		if self.cursor.line < 1 then
-			self.cursor.line = 1
-		end
+		if kb.isDown(modKey[1]) or kb.isDown(modKey[2]) then
+			if self.cursor.line > 1 then
+				local nextLine = self.linesRaw[self.cursor.line - 1]
+				self.linesRaw[self.cursor.line - 1] = self.linesRaw[self.cursor.line]
+				self.linesRaw[self.cursor.line ] = nextLine
+				self.cursor.line = self.cursor.line - 1
+			end
+		else
+			local step = 1
+			if kb.isDown("lshift") or kb.isDown("rshift") then
+				step = self.visibleLines
+			end
+			self.cursor.line = self.cursor.line - step
+			if self.cursor.line < 1 then
+				self.cursor.line = 1
+			end
 
-		local len = utf8len(self.linesRaw[self.cursor.line])
-		if len < self.cursor.position then
-			self.cursor.position = len
+			local len = utf8len(self.linesRaw[self.cursor.line])
+			if len < self.cursor.position then
+				self.cursor.position = len
+			end
 		end
 
 		self:updateCursor()
@@ -502,6 +520,10 @@ function codeEditor:keypressed(key)
 		self:updateCursor()
 	elseif key == "tab" then
 		self:insertText("	")
+	elseif key == "d" then
+		if kb.isDown(modKey[1]) or kb.isDown(modKey[2]) then
+			table.insert(self.linesRaw, self.cursor.line, self.linesRaw[self.cursor.line])
+		end
 	end
 end
 

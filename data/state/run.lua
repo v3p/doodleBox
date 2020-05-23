@@ -40,10 +40,48 @@ function run:draw()
 	love.graphics.draw(mainCanvas)
 end
 
-function run:mousepressed(x, y, k)
-	love.window.setMode(config.display.width, config.display.height, {resizable = true, fullscreen = config.display.fullscreen, display = config.display.display, usedpiscale = false})
-	love.window.setTitle(config.display.windowTitle)
-	state:setState("editor")
+function run:keypressed(key)
+	if useLoop then
+		if type(keypressed) == "function" then
+			local status, err = pcall(keypressed, key)
+			if not status then
+				state:setState("console")
+				console:print("ERROR: "..err, "error")
+			end
+		end
+	end
+end
+
+function run:keyreleased(key)
+	if useLoop then
+		if type(keypressed) == "function" then
+			local status, err = pcall(keyreleased, key)
+			if not status then
+				state:setState("console")
+				console:print("ERROR: "..err, "error")
+			end
+		end
+	end
+end
+
+function run:touchpressed(x, y, k)
+	if platform == "mobile" then
+		love.window.setMode(config.display.width, config.display.height, {resizable = true, fullscreen = config.display.fullscreen, display = config.display.display, usedpiscale = false})
+		love.window.setTitle(config.display.windowTitle)
+		state:setState("editor")
+	end
 end
 
 return run
+
+
+
+
+
+
+
+
+
+
+
+

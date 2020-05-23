@@ -59,7 +59,19 @@ function editor:loadFile(name)
 	end
 end
 
+function editor:unloadFile(name)
+	for i,v in ipairs(self.tab) do
+		if v.name == name then
+			table.remove(self.tab, i)
+			if self.currentTab == i then
+				self.currentTab = 1
+			end
+		end
+	end
+end
+
 function editor:loadDoodle(name)
+	self.tab = {}
 	for i, file in ipairs(fs.getDirectoryItems(projectFolder.."/"..name)) do
 		if getFileType(file) == ".lua" then
 			self.tab[i] = {code = codeEditor.new(0, 0, config.display.width, self.height), name = file}
@@ -98,7 +110,7 @@ function editor:draw()
 
 	if kb.isDown(modKey[1]) or kb.isDown(modKey[2]) then
 		lg.setColor(0, 0, 0, 0.8)
-		lg.rectangle("fill", 0, 0, math.floor(config.display.width / 2), config.display.height)
+		lg.rectangle("fill", math.floor(config.display.width * 0.7), 0, math.floor(config.display.width / 2), config.display.height)
 		lg.setColor(0, 0.5, 1, 1)
 
 		for i,v in ipairs(self.tab) do
@@ -107,7 +119,7 @@ function editor:draw()
 			else
 				lg.setColor(1, 1, 1, 1)
 			end
-			lg.printf("["..i.."]"..self.tab[i].code.file, lg.getWidth() * 0.01, lg.getHeight() * 0.01 + (self.tab[i].code.fontHeight * i), lg.getWidth(), "left")
+			lg.printf("["..i.."]"..self.tab[i].code.file, lg.getWidth() * 0.71, lg.getHeight() * 0.01 + (self.tab[i].code.fontHeight * i), lg.getWidth(), "left")
 		end
 	end
 

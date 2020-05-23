@@ -30,8 +30,10 @@ function love.load()
 	lg.setDefaultFilter("nearest", "nearest")
 
 	modKey = {"lctrl", "rctrl"}
+	modKeyName = "ctrl"
 	if love.system.getOS() == "OS X" then
 		modKey = {"lgui", "rgui"}
+		modKeyName = "cmd"
 	end
 
 	require("data.class.util")

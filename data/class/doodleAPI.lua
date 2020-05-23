@@ -1,7 +1,7 @@
 _FUNCTIONS = {
 	"clear", "mode", "circle", "rect", "polygon", "line", "noLoop", "loadFile", "size", "randomColor", "color", "background", "normal",
 	"lerp", "clamp", "dist", "floor", "ceil", "sin", "cos", "tan", "random", "noise", "angle", "newCanvas", "setCanvas", "print", "text",
-	"textf"
+	"textf", "keyDown", "setup", "update", "draw", "keypressed", "keyreleased"
 }
 
 _GLOBALS = {
@@ -34,7 +34,7 @@ mainCanvas = lg.newCanvas()
 drawMode = "fill"
 useLoop = true
 
---Drawing
+--GRAPHICS
 function clear()
 	love.graphics.clear()
 end
@@ -67,28 +67,6 @@ function noLoop()
 	useLoop = false
 end
 
-function print(t)
-	console:print(currentDoodle..": "..t, "run")
-end
-
---Setup
-function loadFile(file)
-	local f = file
-	if getFileType(file) ~= ".lua" then
-		f = file..".lua"
-	end
-	return fs.load(projectFolder.."/"..currentDoodle.."/"..f)()
-end
-
-function size(_width, _height)
-	local w, h, flags = love.window.getMode()
-
-	love.window.setMode(_width, _height, flags)
-	love.window.setTitle(currentDoodle)
-	width = _width
-	height = _height
-end
-
 --Color
 function randomColor()
 	return {math.random(), math.random(), math.random()}
@@ -113,6 +91,29 @@ function background(r, g, b, a)
 	lg.rectangle("fill", 0, 0, mainCanvas:getWidth(), mainCanvas:getHeight())
 	
 	lg.setColor(_r, _g, _b, _a)
+end
+
+--DEBUG
+function print(t)
+	console:print(currentDoodle..": "..t, "run")
+end
+
+--Setup
+function loadFile(file)
+	local f = file
+	if getFileType(file) ~= ".lua" then
+		f = file..".lua"
+	end
+	return fs.load(projectFolder.."/"..currentDoodle.."/"..f)()
+end
+
+function size(_width, _height)
+	local w, h, flags = love.window.getMode()
+
+	love.window.setMode(_width, _height, flags)
+	love.window.setTitle(currentDoodle)
+	width = _width
+	height = _height
 end
 
 function newCanvas(w, h)
@@ -180,6 +181,12 @@ function setPixels(t)
 	lg.draw(img)
 end
 
+--INPUT
+function keyDown(key)
+	return love.keyboard.isDown(key)
+end
+
+--CALLBACKS (for exporting)
 function updateGlobals()
 	mouseX = love.mouse.getX()
 	mouseY = love.mouse.getY()

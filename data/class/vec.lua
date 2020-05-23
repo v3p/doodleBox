@@ -116,15 +116,8 @@ function vec:div(v)
 end
 
 function vec:limit(v)
-	if self.x > v then
-		self.x = v
-	elseif self.x < -v then
-		self.x = -v
-	end
-	if self.y > v then
-		self.y = v
-	elseif self.y < -v
-		then self.y = -v
+	if self:getLength() > v then
+		self:setLength(v)
 	end
 end
 
