@@ -1,6 +1,7 @@
 local run = {}
 
 function run:load()
+	love.keyboard.setTextInput(false)
 	useLoop = true
 	if type(setup) == "function" then
 		local status, err = pcall(setup)
@@ -74,6 +75,12 @@ function run:mousepressed(x, y, k)
 			end
 		end
 	end
+
+	if platform == "mobile" then
+		love.window.setMode(config.display.width, config.display.height, {resizable = true, fullscreen = config.display.fullscreen, display = config.display.display, usedpiscale = false})
+		love.window.setTitle(config.display.windowTitle)
+		state:setState("editor")
+	end
 end
 
 function run:mousereleased(x, y, k)
@@ -85,14 +92,6 @@ function run:mousereleased(x, y, k)
 				console:print("ERROR: "..err, "error")
 			end
 		end
-	end
-end
-
-function run:touchpressed(x, y, k)
-	if platform == "mobile" then
-		love.window.setMode(config.display.width, config.display.height, {resizable = true, fullscreen = config.display.fullscreen, display = config.display.display, usedpiscale = false})
-		love.window.setTitle(config.display.windowTitle)
-		state:setState("editor")
 	end
 end
 

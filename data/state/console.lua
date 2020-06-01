@@ -70,7 +70,10 @@ function consoleState:resize(w, h)
 end
 
 function consoleState:mousepressed(x, y, k)
-	button:press(x, y)
+	local bp = button:press(x, y)
+	if not bp then
+		love.keyboard.setTextInput(not love.keyboard.hasTextInput())
+	end
 end
 
 return consoleState

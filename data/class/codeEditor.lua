@@ -28,7 +28,7 @@ local syntaxColor = {
 	number = convertColor(227, 173, 57, 255),
 	functions = convertColor(58, 190, 254, 255),
 	globals = convertColor(224, 91, 91, 255),
-	comment = {0.3, 0.3, 0.3, 1}
+	comment = {0, 1, 1, 1}
 }
 
 local _LUA_FUNCTIONS = {
@@ -258,7 +258,7 @@ function codeEditor:highlight()
 			elseif isString then
 				textList[#textList + 1] = syntaxColor.string
 				textList[#textList + 1] = v
-			elseif v == '"' or v == "'" then
+			elseif v == '"' or v == "'" or v == "[" or v == "]" then
 				textList[#textList + 1] = syntaxColor.string
 				textList[#textList + 1] = v
 			else

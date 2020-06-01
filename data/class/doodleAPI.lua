@@ -1,12 +1,15 @@
 _FUNCTIONS = {
 	"clear", "mode", "circle", "rect", "polygon", "line", "noLoop", "loadFile", "size", "randomColor", "color", "background", "normal",
 	"lerp", "clamp", "dist", "floor", "ceil", "sin", "cos", "tan", "random", "noise", "angle", "newCanvas", "setCanvas", "print", "text",
-	"textf", "keyDown", "setup", "update", "draw", "keypressed", "keyreleased"
+	"textf", "keyDown", "setup", "update", "draw", "drawImage", "keypress", "keyrelease", "mousepress", "mouserelease", "newImage", "colorSpace",
+	"newShader", "setShader", "sqrt"
 }
 
 _GLOBALS = {
 	"PI", "TWOPI", "width", "height", "mouseX", "mouseY"
 }
+
+COLOR_SPACE = "rgb"
 
 --Shortcuts
 width = love.graphics.getWidth()
@@ -16,8 +19,11 @@ ceil = math.ceil
 sin = math.sin
 cos = math.cos
 tan = math.tan
+sqrt = math.sqrt
 random = math.random
-draw = love.graphics.draw
+drawImage = love.graphics.draw
+newShader = love.graphics.newShader
+setShader = love.graphics.setShader
 text = love.graphics.print
 textf = love.graphics.printf
 noise = love.math.noise
@@ -33,6 +39,12 @@ kb = love.keyboard
 mainCanvas = lg.newCanvas()
 drawMode = "fill"
 useLoop = true
+	
+
+function screenShot(name)
+	name = name or os.time()..".png"
+	love.graphics.captureScreenshot(name)	
+end
 
 --GRAPHICS
 function clear()
@@ -46,6 +58,7 @@ function mode(m)
 		error("Invalid draw mode! Use 'fill' or 'line'")
 	end
 end
+
 
 function circle(x, y, radius, segments)
 	love.graphics.circle(drawMode, x, y, radius, segments)
@@ -67,16 +80,36 @@ function noLoop()
 	useLoop = false
 end
 
+function newImage(path)
+	return lg.newImage(projectFolder.."/"..currentDoodle.."/"..path)
+end
+
 --Color
 function randomColor()
 	return {math.random(), math.random(), math.random()}
 end
 
+function colorSpace(space)
+	if space == "rgb" or space == "hsl" then
+		COLOR_SPACE = space
+	else
+		error("Invalid color space '"..space.."', Use'rgb' or 'hsl")
+	end
+end
+
 function color(r, g, b, a)
 	if not g and not b and not a then
-		love.graphics.setColor(r, r, r, 1)
+		if COLOR_SPACE == "rgb" then
+			love.graphics.setColor(r, r, r, 1)
+		else
+			lg.setColor(hsl(r * 255, r * 255, r * 255, 255))
+		end
 	else
-		love.graphics.setColor(r, g, b, a)
+		if COLOR_SPACE == "rgb" then
+			love.graphics.setColor(r, g, b, a)
+		else
+			lg.setColor(hsl(r, g, b, a))
+		end
 	end
 end
 
@@ -133,6 +166,7 @@ function setCanvas(c)
 		lg.setCanvas(mainCanvas)
 	end
 end
+
 
 --Math
 function normal(val, min, max)

@@ -30,13 +30,16 @@ function button:draw()
 end
 
 function button:press(x, y)
+	local p = false
 	for i,v in ipairs(self.list) do
 		if pointInRect(x, y, v.x, v.y, v.width, v.height) then
 			if type(v.func) == "function" then
 				v.func(v)
+				p = true
 			end
 		end
 	end
+	return p
 end
 
 

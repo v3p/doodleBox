@@ -46,10 +46,12 @@ end
 
 function editor:loadFile(name)
 	if fs.getInfo(projectFolder.."/"..currentDoodle.."/"..name) then
-		self.tab[#self.tab + 1] = {code = codeEditor.new(0, 0, config.display.width, self.height), name = name}
-		self.tab[#self.tab].code:init()
-		self.tab[#self.tab].code:setFont(mainFont)
-		self.tab[#self.tab].code:loadFile(projectFolder.."/"..currentDoodle.."/"..name)
+		if getFileType(file) == ".lua" then
+			self.tab[#self.tab + 1] = {code = codeEditor.new(0, 0, config.display.width, self.height), name = name}
+			self.tab[#self.tab].code:init()
+			self.tab[#self.tab].code:setFont(mainFont)
+			self.tab[#self.tab].code:loadFile(projectFolder.."/"..currentDoodle.."/"..name)
+		end
 	else
 		console:print("ERROR: File '"..name.."' does not exists!", "error")
 	end
@@ -178,7 +180,10 @@ function editor:resize(w, h)
 end
 
 function editor:mousepressed(x, y)
-	button:press(x, y)
+	local bp = button:press(x, y)
+	if not bp then
+		love.keyboard.setTextInput(not love.keyboard.hasTextInput())
+	end
 end
 
 function editor:quit()
